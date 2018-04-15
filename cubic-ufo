@@ -1,0 +1,60 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <iomanip>
+using namespace std;
+
+// https://codejam.withgoogle.com/2018/challenges/00000000000000cb/dashboard/00000000000079cc
+const long double PI = 3.141592653589793238L;
+//const double PI = 3.141592653589793;
+//const float PI = 3.1415927;
+
+vector<long double> cubicUFO(long double A) {
+    vector<long double> ret;
+    long double theta = (acos(A/sqrt((double)2)) * (double)180) / PI;
+    theta = round(theta);
+    cout << acos (A/sqrt(2.0)) << ", " << 45 - theta << endl;
+    long double x = cos(45.0-theta) / (double)2, y = sin(45.0-theta) / (double)2;
+    ret.push_back(x);
+    ret.push_back(y);
+    if(y != 0) {
+        ret.push_back((-1.0)*y);
+    } else {
+        ret.push_back(y);
+    }
+    ret.push_back(x);
+    return ret;
+}
+
+//#define inputFile cin
+//#define outputFile cout
+
+int main() {
+    ifstream inputFile("/Users/jnambiar/CLionProjects/cubic-ufo/input.txt");
+    ofstream outputFile("/Users/jnambiar/CLionProjects/cubic-ufo/output.txt");
+
+    int testCases=0;
+    inputFile >> testCases;
+    inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < testCases; i++) {
+        long double A;
+        inputFile >> A;
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        vector<long double> coordinates = cubicUFO(A);
+        outputFile << "Case #" << i + 1 << ": " << endl;
+        outputFile << std::fixed << std::setprecision(6) << coordinates[0] << " " << std::fixed << std::setprecision(6) << coordinates[1] << " 0" << endl;
+        outputFile << std::fixed << std::setprecision(6) << coordinates[2] << " " << std::fixed << std::setprecision(6) << coordinates[3] << " 0" << endl;
+        outputFile << "0 0 0.5" << endl;
+    }
+    inputFile.close();
+    outputFile.close();
+    return 0;
+}
