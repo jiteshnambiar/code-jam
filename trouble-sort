@@ -1,0 +1,95 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <iomanip>
+using namespace std;
+
+// https://codejam.withgoogle.com/2018/challenges/00000000000000cb/dashboard/00000000000079cb
+/*void troubleSort(vector<unsigned long int>& list) {
+    bool done = false;
+    while(!done) {
+        done = true;
+        for(int i = 0; i < list.size() - 2; i++) {
+            if(list[i] > list[i+2]) {
+                done = false;
+                iter_swap(list.begin()+i, list.begin()+i+2);
+            }
+        }
+    }
+}*/
+
+vector<unsigned long int> alternate(const vector<unsigned long int>& list, int index) {
+    vector<unsigned long int> ret;
+    for(int i = index; i < list.size(); i+=2) {
+        ret.push_back(list[i]);
+    }
+    return ret;
+}
+
+vector<unsigned long int> merge(const vector<unsigned long int>& even, const vector<unsigned long int>& odd) {
+    vector<unsigned long int> ret;
+    int i = 0, j = 0;
+    while(i < even.size() && j < odd.size()) {
+        ret.push_back(even[i++]);
+        ret.push_back(odd[j++]);
+    }
+    if(i < even.size()) {
+        ret.push_back(even[i]);
+    }
+    return ret;
+}
+
+int validateTroubleSort(vector<unsigned long int>& list) {
+    vector<unsigned long int> even, odd;
+    even = alternate(list, 0);
+    odd = alternate(list, 1);
+    sort(even.begin(), even.end());
+    sort(odd.begin(), odd.end());
+    vector<unsigned long int> merged = merge(even, odd);
+    for(int i = 0; i + 1 < merged.size(); i++) {
+        if(merged[i] > merged[i+1]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+//#define inputFile cin
+//#define outputFile cout
+
+int main() {
+    ifstream inputFile("/Users/jnambiar/CLionProjects/trouble-sort/input.txt");
+    ofstream outputFile("/Users/jnambiar/CLionProjects/trouble-sort/output.txt");
+
+    int testCases=0;
+    inputFile >> testCases;
+    inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < testCases; i++) {
+        int V, N;
+        inputFile >> V;
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        vector<unsigned long int> list(V);
+        for(int i = 0; i < V; i++) {
+            inputFile >> N;
+            list[i] = N;
+        }
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        int firstSortingErrorIndex = validateTroubleSort(list);
+        if(firstSortingErrorIndex < 0) {
+            outputFile << "Case #" << i + 1 << ": OK" << endl;
+        } else {
+            outputFile << "Case #" << i + 1 << ": " << firstSortingErrorIndex << endl;
+        }
+    }
+    inputFile.close();
+    outputFile.close();
+    return 0;
+}
