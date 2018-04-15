@@ -1,0 +1,142 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <unordered_set>
+#include <iomanip>
+using namespace std;
+
+// https://codejam.withgoogle.com/2018/challenges/00000000000000cb/dashboard/0000000000007a30
+struct Coord {
+    int x, y;
+    Coord(int _x, int _y): x(_x), y(_y) {}
+};
+
+bool operator==(const Coord& lhs, const Coord& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+// custom specialization of std::hash can be injected in namespace std
+namespace std
+{
+    template<> struct hash<Coord>
+    {
+        typedef Coord argument_type;
+        typedef std::size_t result_type;
+        result_type operator()(argument_type const& s) const noexcept
+        {
+            return s.x ^ (s.y << 1); // or use boost::hash_combine (see Discussion)
+        }
+    };
+}
+
+
+int minX, minY, maxX, maxY;
+unordered_set<Coord> ready;
+ifstream inputFile("/Users/jnambiar/CLionProjects/go-gopher/input.txt");
+ofstream outputFile("/Users/jnambiar/CLionProjects/go-gopher/output.txt");
+
+bool flag = false;
+
+int emptyAdjacentCells(const Coord &coordinate) {
+    int ret = 0, x, y;
+    for(int i = -1; i <= 1; i++) {
+        for(int j = -1; j <= 1; j++) {
+            x = coordinate.x + i;
+            y = coordinate.y + j;
+            bool nonReady = (ready.find(Coord(x,y)) == ready.end());
+            if(x >= minX && y >= minY && x <= maxX && y <= maxY && nonReady) {
+                ret++;
+            }
+        }
+    }
+    return ret;
+}
+
+Coord mostAdjacentCellsEmpty(const Coord& skip) {
+    int maxAdjEmpty = 0, x = minX, y = minY;
+    for(int i = minX; i <= maxX; i++) {
+        for(int j = minY; j <= maxY; j++) {
+            if(skip.x == i && skip.y == j) {
+                continue;
+            } else if(i == 2 || j == 2 || i == 999 || j == 999) {
+                continue;
+            }
+
+            int adj = emptyAdjacentCells(Coord(i, j));
+            if(adj == maxAdjEmpty && i == j) {
+                x = i; y = j;
+            }else if(adj > maxAdjEmpty) {
+                maxAdjEmpty = adj;
+                x = i; y = j;
+            }
+        }
+    }
+    return Coord(x, y);
+}
+
+Coord markCellReady(int x, int y) {
+    ready.insert(Coord(x, y));
+    if(ready.size() == 1) {
+        minX = maxX = x;
+        minY = maxY = y;
+        return Coord(x, y);
+    }
+
+    minX = min(minX, x);
+    minY = min(minY, y);
+    maxX = max(maxX, x);
+    maxY = max(maxY, y);
+    return mostAdjacentCellsEmpty(Coord(-1, -1));
+}
+
+int main() {
+    int testCases=0;
+    cin >> testCases;
+    outputFile << "testcases: " << testCases << endl;
+    for (int i = 0; i < testCases; i++) {
+        int A;
+        cin >> A;
+        outputFile << "A: " << A << endl;
+        int x = 10, y = 10, attempts = 0;
+        minX = x; minY = y; maxX = x; maxY = y;
+        ready.clear();
+        int prevX, prevY;
+        while(attempts < 1000) {
+            outputFile << "send cell to prepare: " << x << ", " << y << endl << std::flush;
+            cout << x << " "<< y << endl << std::flush;
+            prevX = x; prevY = y;
+            cin >> x >> y;
+            outputFile << "[" << attempts << "] read prepared cells: " << x << ", " << y << endl << std::flush;
+            attempts++;
+            if(x == 0 && y == 0) {
+                break;
+            }
+
+            if(ready.find(Coord(x, y)) == ready.end()) {
+                Coord next = markCellReady(x, y);
+                x = next.x; y = next.y;
+                if(((maxX-minX+1)*(maxY-minY+1)) == ready.size()) { // finished a rectangular block
+                    x = maxX; y = maxY;
+                }
+            } else if(x == y && prevX == prevY) {
+                // pick next
+                Coord next = mostAdjacentCellsEmpty(Coord(prevX, prevY));
+                x = next.x; y = next.y;
+            } else {
+                x = prevX; y = prevY;
+            }
+        }
+        outputFile << "Success after " << attempts << " attempts!";
+    }
+    inputFile.close();
+    outputFile.close();
+    return 0;
+}
