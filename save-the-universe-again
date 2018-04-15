@@ -1,0 +1,83 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <iomanip>
+using namespace std;
+
+// https://codejam.withgoogle.com/2018/challenges/00000000000000cb/dashboard
+int saveTheWorldAgain(unsigned long int D, string P) {
+    vector<int> damages(P.length());
+    int cnt = 0, damage = 1, totalDamage = 0;
+    for(int i = 0; i < P.length(); i++) {
+        char ch = P[i];
+        if(ch == 'C') {
+            cnt++;
+            damage *= 2;
+        } else {
+            totalDamage+=damage;
+        }
+        damages[i] = damage;
+    }
+
+    if(totalDamage <= D) {
+        return 0;
+    } else if(cnt == 0 || P.length() == 1) {
+        return -1;
+    }
+
+    int hacks = 0, pos = P.length();
+    while(cnt != 0) {
+        int i = --pos;
+        while(i >= 0 && P[i]=='S') {i--;}
+        while((i+1 < P.length()) && (P[i+1] == 'S')) {
+            totalDamage -= damages[i+1]/2;
+            hacks++;
+            if(totalDamage <= D) {
+                return hacks;
+            }
+            damages[i] = damages[i+1]/2;
+            P[i] = 'S';
+            P[i+1] = 'C';
+            i++;
+        }
+        cnt--;
+    }
+
+    return -1;
+}
+
+#define inputFile cin
+#define outputFile cout
+
+int main() {
+    //ifstream inputFile("/Users/jnambiar/CLionProjects/save-the-universe-again/input.txt");
+    //ofstream outputFile("/Users/jnambiar/CLionProjects/save-the-universe-again/output.txt");
+
+    int testCases=0;
+    inputFile >> testCases;
+    inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < testCases; i++) {
+        int D;
+        inputFile >> D;
+        string P;
+        inputFile >> P;
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        int hacks = saveTheWorldAgain(D, P);
+        if(hacks < 0) {
+            outputFile << "Case #" << i + 1 << ": IMPOSSIBLE" << endl;
+        } else {
+            outputFile << "Case #" << i + 1 << ": " << hacks << endl;
+        }
+    }
+    //inputFile.close();
+    //outputFile.close();
+    return 0;
+}
