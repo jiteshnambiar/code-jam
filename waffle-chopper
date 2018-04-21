@@ -1,0 +1,116 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <iomanip>
+#include <set>
+using namespace std;
+
+// https://codejam.withgoogle.com/2018/challenges/0000000000007883/dashboard
+string waffleChopper(int H, int V, int total,
+                     const vector<int>& rowChipsCount,
+                     const vector<int>& colChipsCount,
+                     const vector<vector<bool>>& matrix) {
+    if(total%((H+1)*(V+1)) != 0) {
+        return "IMPOSSIBLE";
+    } else if(total == 0) {
+        return "POSSIBLE";
+    }
+
+    vector<int> rowCumulativeCounts(rowChipsCount.size()), colCumulativeCounts(colChipsCount.size());
+    partial_sum(rowChipsCount.begin(), rowChipsCount.end(), rowCumulativeCounts.begin());
+    partial_sum(colChipsCount.begin(), colChipsCount.end(), colCumulativeCounts.begin());
+
+    vector<int> rowCuts, colCuts;
+    int singleRowCutCount = total / (H+1), singleColCutCount = total / (V+1);
+    for(auto i = 0; i < rowCumulativeCounts.size(); i++) {
+        if(i > 0 && rowCumulativeCounts[i-1] == rowCumulativeCounts[i]) {
+            continue;
+        } else if(rowCumulativeCounts[i] % singleRowCutCount == 0) {
+            rowCuts.push_back(i);
+        }
+    }
+    if(rowCuts.size() != H+1) {
+        return "IMPOSSIBLE";
+    }
+
+    for(auto i = 0; i < colCumulativeCounts.size(); i++) {
+        if(i > 0 && colCumulativeCounts[i-1] == colCumulativeCounts[i]) {
+            continue;
+        } else if(colCumulativeCounts[i] % singleColCutCount == 0) {
+            colCuts.push_back(i);
+        }
+    }
+    if(colCuts.size() != V+1) {
+        return "IMPOSSIBLE";
+    }
+
+    // verify
+    int singleCutCount = total/((H+1)*(V+1));
+    int rowFrom = 0, rowTo, colFrom, colTo;
+    for(int i = 0; i < rowCuts.size(); i++) {
+        rowTo = rowCuts[i]; colFrom = 0;
+        for(int j = 0; j < colCuts.size(); j++) {
+            colTo = colCuts[j];
+            //each cut
+            int cnt = 0;
+            for(int m = rowFrom; m <= rowTo; m++) {
+                for(int n = colFrom; n <= colTo; n++) {
+                    cnt += matrix[m][n] ? 1 : 0;
+                }
+            }
+            if(cnt != singleCutCount) {
+                return "IMPOSSIBLE";
+            }
+            colFrom = colTo+1;
+        }
+        rowFrom = rowTo+1;
+    }
+    return "POSSIBLE";
+}
+
+//#define inputFile cin
+//#define outputFile cout
+
+int main() {
+    ifstream inputFile("/Users/jnambiar/CLionProjects/waffle-chopper/input.txt");
+    ofstream outputFile("/Users/jnambiar/CLionProjects/waffle-chopper/output.txt");
+
+    int testCases=0;
+    inputFile >> testCases;
+    inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < testCases; i++) {
+        int R, C, H, V;
+        inputFile >> R >> C >> H >> V;
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        vector<vector<bool>> matrix(R, vector<bool>(C, false));
+        string str;
+        int totalChipsCount = 0;
+        vector<int> rowChipsCount(R, 0), colChipsCount(C, 0);
+        for(int j = 0; j < R; j++) {
+            inputFile >> str;
+            int rowCnt = 0;
+            for(int k = 0; k < C; k++) {
+                bool isChip = (str[k] == '@');
+                matrix[j][k] = isChip;
+                rowCnt+= (isChip ? 1 : 0);
+                colChipsCount[k] += (isChip ? 1 : 0);
+            }
+            totalChipsCount+=rowCnt;
+            rowChipsCount[j] = rowCnt;
+            inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+        outputFile << "Case #" << i + 1 << ": " <<
+                   waffleChopper(H, V, totalChipsCount, rowChipsCount, colChipsCount, matrix) << endl;
+    }
+    inputFile.close();
+    outputFile.close();
+    return 0;
+}
