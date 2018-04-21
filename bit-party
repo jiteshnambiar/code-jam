@@ -1,0 +1,93 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <iomanip>
+#include <set>
+using namespace std;
+
+// https://codejam.withgoogle.com/2018/challenges/0000000000007883/dashboard/000000000002fff6
+struct Cashier {
+    long long M, S, P;
+    Cashier(): M(0), S(0), P(0) {}
+    Cashier(long long _M, long long _S, long long _P): M(_M), S(_S), P(_P) {}
+};
+
+long long bitParty(long long R, long long B, long long C, const vector<Cashier>& cashiers) {
+    const long maxScanTime = (*max_element(cashiers.begin(), cashiers.end(),
+                                           [] (const Cashier& left, const Cashier& right) { return left.S < right.S; })).S;
+    const long maxPackTime = (*max_element(cashiers.begin(), cashiers.end(),
+                                           [] (const Cashier& left, const Cashier& right) { return left.P < right.P; })).P;
+    const long minScanTime = (*max_element(cashiers.begin(), cashiers.end(),
+                                           [] (const Cashier& left, const Cashier& right) { return left.S > right.S; })).S;
+    const long minPackTime = (*max_element(cashiers.begin(), cashiers.end(),
+                                           [] (const Cashier& left, const Cashier& right) { return left.P > right.P; })).P;
+    int minTime = minScanTime + minPackTime, maxTime = maxScanTime * B + maxPackTime;
+    vector<vector<pair<int, int>>> cashierCapacities(maxTime+1);
+    vector<int> maxCapacities(maxTime+1, -1);
+    int low = minTime, high = maxTime;
+    while(low <= high) {
+        int time = low + ((high - low) / 2);
+        if(maxCapacities[time] < 0) {
+            for(int i = 0; i < C; i++) {
+                const Cashier& cashier = cashiers[i];
+                int maxBitsScannedByCashier = max((long long)0,
+                                                  min(cashier.M, static_cast<long long>(floor((time-cashier.P)/cashier.S))));
+                cashierCapacities[time].push_back(make_pair(maxBitsScannedByCashier, i));
+            }
+            sort(cashierCapacities[time].begin(), cashierCapacities[time].end(),
+                 [](auto& left, auto& right){ return left.first > right.first; });
+
+            int cnt = 0;
+            for(int i = 0; i < R; i++) {
+                cnt+=cashierCapacities[time][i].first;
+            }
+            maxCapacities[time] = cnt;
+        }
+
+        if(maxCapacities[time] < B) {
+            low = time + 1;
+        } else if(time == low || (maxCapacities[time-1] != -1 && maxCapacities[time-1] < B)) {
+            return time;
+        } else {
+            high = time;
+        }
+    }
+    return maxTime;
+}
+
+//#define inputFile cin
+//#define outputFile cout
+
+int main() {
+    ifstream inputFile("/Users/jnambiar/CLionProjects/bit-party/input.txt");
+    ofstream outputFile("/Users/jnambiar/CLionProjects/bit-party/output.txt");
+
+    int testCases=0;
+    inputFile >> testCases;
+    inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < testCases; i++) {
+        long long R, B, C;
+        inputFile >> R >> B >> C;
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        vector<Cashier> cashiers;
+        long long M, S, P;
+        for(int j = 0; j < C; j++) {
+            inputFile >> M >> S >> P;
+            cashiers.push_back(Cashier(M, S, P));
+            inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+        outputFile << "Case #" << i + 1 << ": " <<
+                   bitParty(R, B, C, cashiers) << endl;
+    }
+    inputFile.close();
+    outputFile.close();
+    return 0;
+}
