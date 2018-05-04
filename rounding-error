@@ -1,0 +1,110 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <unordered_set>
+#include <iomanip>
+using namespace std;
+
+int roundingError(long N, long polled, vector<long> realSurvey) {
+    unordered_set<long> betterRoundingPollNumbers;
+    int minimumBest = 1; // set maxBest=1
+    for(long i = N; i > 0; i--) {
+        if(round(i * 100 / (1.0 * N)) != (i * 100 / N)) {
+            betterRoundingPollNumbers.insert(i);
+            minimumBest = i;
+        }
+    }
+
+    vector<long> bestSurvey, toBeImproved;
+    vector<pair<long, long>> differenceToGetBest;
+
+    if(betterRoundingPollNumbers.empty()) {
+        for(long i = 0; i < realSurvey.size(); ++i) {
+            bestSurvey.push_back(realSurvey[i]);
+        }
+    } else {
+        for(long i = 0; i < realSurvey.size(); ++i) {
+            if(betterRoundingPollNumbers.find(realSurvey[i]) != betterRoundingPollNumbers.end()) {
+                bestSurvey.push_back(realSurvey[i]);
+                continue;
+            }
+
+            toBeImproved.push_back(realSurvey[i]);
+            int index = realSurvey[i] + 1;
+            while(index < N && betterRoundingPollNumbers.find(index) == betterRoundingPollNumbers.end()) {
+                index++; // skip while if index > maxBest
+            }
+            if(index == N) {
+                bestSurvey.push_back(realSurvey[i]);
+            } else {
+                differenceToGetBest.push_back(make_pair(index - realSurvey[i], realSurvey[i]));
+            }
+        }
+    }
+
+
+    long remaining = N - polled, itr = differenceToGetBest.size() - 1;
+    sort(differenceToGetBest.begin(), differenceToGetBest.end(),
+         [](auto left, auto right){
+        return left.first > right.first;
+    });
+
+    while(remaining != 0) {
+        if(remaining < minimumBest && itr >= 0 && remaining < differenceToGetBest[itr].first) {
+            bestSurvey.push_back(remaining);
+            break;
+        } else if(remaining < minimumBest && itr < 0) {
+            bestSurvey.push_back(remaining);
+            break;
+        }
+
+        if(itr >=0 && differenceToGetBest[itr].first < minimumBest) {
+            bestSurvey.push_back(differenceToGetBest[itr].second + differenceToGetBest[itr].first);
+            itr--;
+            remaining -= differenceToGetBest[itr].second;
+        } else {
+            bestSurvey.push_back(minimumBest);
+            remaining -= minimumBest;
+        }
+    }
+
+    while(itr >= 0) {
+        bestSurvey.push_back(differenceToGetBest[itr].second);
+        itr--;
+    }
+
+    int ret = 0;
+    for(auto i : bestSurvey) {
+        ret += round(i * 100 / (1.0 * N));
+    }
+    return ret;
+}
+
+#define inputFile cin
+#define outputFile cout
+
+int main() {
+    int testCases=0;
+    inputFile >> testCases;
+    inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < testCases; i++) {
+        int N, L, Ci;
+        inputFile >> N >> L;
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        vector<long> survey;
+        for (int i = 0; i < L; i++) {
+            inputFile >> Ci;
+            survey.push_back(Ci);
+        }
+        outputFile << "Case #" << i + 1 << ": " << roundingError(N, std::accumulate(survey.begin(), survey.end(), 0), survey) << endl;
+    }
+    return 0;
+}
