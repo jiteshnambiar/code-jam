@@ -1,0 +1,87 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <iomanip>
+#include <set>
+using namespace std;
+
+pair<long int, long int> signs(vector<long long int>& M, vector<long long int>& N) {
+    priority_queue<long int> pq;
+    int start = 0, end = 0, i = 0, j = 0, prefix, suffix;
+    pair<int, int> prev = make_pair(INT_MIN, INT_MIN);
+    while(i < M.size()) {
+        start = i;
+        while(i < M.size() && M[i] == M[start]) {i++;}
+        end = i;
+        j = start - 1;
+        while(j >= 0 && N[j] == N[start-1]) {j--;}
+        prefix = start-1 - j;
+        j = end;
+        while(j < N.size() && N[j] == N[end]) {j++;}
+        suffix = j - end;
+        if(prefix == 0 && suffix == 0) {
+            pq.push(end - (start - prefix));
+        } else if(start - prefix == prev.first && end == prev.second) {
+            pq.push((end + suffix) - start);
+        }
+        else {
+            pq.push(end - (start - prefix));
+            pq.push((end + suffix) -start);
+        }
+        prev.first = start;
+        prev.second = end + suffix;
+        i = end;
+    }
+    long int largest = pq.top(), count = 0;
+    while(!pq.empty()) {
+        long int top = pq.top();
+        if(top != largest) { break; }
+        pq.pop();
+        count++;
+    }
+    return make_pair(largest, count);
+}
+
+#define inputFile cin
+#define outputFile cout
+
+int main() {
+    int testCases=0;
+    inputFile >> testCases;
+    inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < testCases; i++) {
+        long int S, D, A, B;
+        inputFile >> S;
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        vector<long long int> M, N;
+        for(int j = 0; j < S; j++) {
+            inputFile >> D >> A >> B;
+            M.push_back(D+A);
+            N.push_back(D-B);
+            inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+        for(int j = 0; j < M.size(); j++) {
+            cout << M[j] << " ";
+        } cout << endl;
+        for(int j = 0; j < N.size(); j++) {
+            cout << N[j] << " ";
+        } cout << endl;
+        pair<long int, long int> result = signs(M, N);
+        outputFile << "Case #" << i + 1 << ": " <<
+                   result.first << " " << result.second << endl;
+    }
+    vector<long long int> X = {9, 8, 8, 8, 7, 7, 7, 7, 6, 6};
+    vector<long long int> Y = {1, 1, 1, 2, 2, 3, 3, 3, 3, 4};
+    pair<long int, long int> result2 = signs(X, Y);
+    outputFile << "Case #" << ": " <<
+               result2.first << " " << result2.second << endl;
+    return 0;
+}
