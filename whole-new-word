@@ -1,0 +1,130 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <iomanip>
+using namespace std;
+
+
+class Trie {
+public:
+    Trie() : leafNode(true) {}
+    bool isEmpty();
+    void insert(string str);
+    unordered_map<char, Trie*>& getRoot() { return trieMap;  }
+    bool search(string str);
+private:
+    bool leafNode;
+    unordered_map<char, Trie*> trieMap;
+};
+
+bool Trie::isEmpty() {
+    if (leafNode)
+        return true;
+
+    return false;
+}
+
+void Trie::insert(const string str) {
+    if (str.length() < 1) {
+        return;
+    }
+
+    if (leafNode) {
+        leafNode = false;
+    }
+    char ch = str[0];
+    if (trieMap.find(ch) == trieMap.end()) {
+        trieMap.insert(make_pair(ch, new Trie()));
+    }
+
+    Trie* trie = trieMap[ch];
+    for (long i = 1; i < str.length(); ++i) {
+        ch = str[i];
+        unordered_map<char, Trie*>& current = trie->getRoot();
+        if (current.find(ch) == current.end()) {
+            current.insert(make_pair(ch, new Trie()));
+        }
+        trie = current[ch];
+    }
+}
+
+bool Trie::search(string str) {
+    char ch = str[0];
+    if (trieMap.find(ch) == trieMap.end()) {
+        return false;
+    }
+    Trie* trie = trieMap[ch];
+
+    for (long i = 1; i < str.length(); ++i) {
+        ch = str[i];
+        unordered_map<char, Trie*>& current = trie->getRoot();
+        if (current.find(ch) == current.end()) {
+            return false;
+        }
+        trie = current[ch];
+    }
+    return true;
+}
+
+string boggle(long N, long L, string prefix, long index, Trie& trieTree, const vector<vector<char>>& words) {
+    if(index == L && !trieTree.search(prefix) ) {
+        return prefix;
+    } else if(index == L) {
+        return "";
+    }
+
+    for(long i = 0; i < N; ++i) {
+        string tmp = boggle(N, L, prefix +words[index][i], index+1, trieTree, words);
+        if(!tmp.empty()) {
+            return tmp;
+        }
+    }
+
+    return "";
+}
+
+string wholeNewWord(long N, long L, Trie& trieTree, const vector<vector<char>>& words) {
+    string result = boggle(N, L, "", 0, trieTree, words);
+    return result.empty() ? "-" : result;
+}
+
+
+//#define inputFile cin
+//#define outputFile cout
+
+int main() {
+
+    ifstream inputFile("/Users/jnambiar/CLionProjects/whole-new-word/input.txt");
+    ofstream outputFile("/Users/jnambiar/CLionProjects/whole-new-word/output.txt");
+
+    int testCases=0;
+    inputFile >> testCases;
+    inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < testCases; i++) {
+        long N, L;
+        inputFile >> N >> L;
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        Trie trieTree;
+        vector<vector<char>> words(L);
+        for (long i = 0; i < N; i++) {
+            string item;
+            std::getline(inputFile, item);
+            trieTree.insert(item);
+            for(long j = 0; j < L; ++j) {
+                words[j].push_back(item[j]);
+            }
+        }
+        outputFile << "Case #" << i + 1 << ": " << wholeNewWord(N, L, trieTree, words) << endl;
+    }
+    inputFile.close();
+    outputFile.close();
+    return 0;
+}
