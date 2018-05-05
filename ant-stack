@@ -1,0 +1,86 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <functional>
+#include <unordered_map>
+#include <iomanip>
+using namespace std;
+
+
+long antStack(long N, const vector<long long>& weights) {
+    long long sum = weights[0];
+    priority_queue<long long> pq;
+    pq.push(weights[0]);
+    for(int i = 1; i < N; ++i) {
+        long long antWt = weights[i], canCarry = antWt * 6;
+        vector<long long> tmp;
+        while(!pq.empty() && sum > canCarry && pq.top() > antWt) {
+            sum -= pq.top();
+            tmp.push_back(pq.top());
+            pq.pop();
+        }
+
+        if(pq.empty() || antWt > pq.top()) {
+            for(long long i: tmp) {
+                pq.push(i);
+            }
+            continue;
+        }
+
+        pq.push(antWt);
+        sum+= antWt;
+    }
+    return pq.size();
+}
+
+long stackAnts(long N, const vector<long long>& weights) {
+    long long sumOfAllAnts = accumulate(weights.begin(), weights.end(), 0);
+    vector<vector<long>> dp(N+1, vector<long>(sumOfAllAnts+1, 0));
+    for(int x = 1; x <= N; ++x) {
+        for(int y = 1; y <= sumOfAllAnts + 1; ++y) {
+            long withoutXthAnt = dp[x-1][y];
+            dp[x][y] = withoutXthAnt;
+            if(y >= weights[x]) {
+                long withXthAntIncluded = dp[x-1][min((6*weights[x]), y-weights[x])] + 1;
+                dp[x][y] = max(withoutXthAnt, withXthAntIncluded);
+            }
+        }
+    }
+    return dp[N][sumOfAllAnts];
+}
+
+//#define inputFile cin
+//#define outputFile cout
+
+int main() {
+
+    ifstream inputFile("/Users/jnambiar/CLionProjects/code-jam/input.txt");
+    ofstream outputFile("/Users/jnambiar/CLionProjects/code-jam/output.txt");
+
+    int testCases=0;
+    inputFile >> testCases;
+    inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < testCases; i++) {
+        long N;
+        inputFile >> N;
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        vector<long long> weights;
+        long long weight = 0;
+        weights.push_back(weight);
+        for (long i = 0; i < N; i++) {
+            inputFile >> weight;
+            weights.push_back(weight);
+        }
+        inputFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        outputFile << "Case #" << i + 1 << ": " << stackAnts(N, weights) << endl;
+    }
+    inputFile.close();
+    outputFile.close();
+    return 0;
+}
